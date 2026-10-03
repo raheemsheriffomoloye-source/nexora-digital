@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -17,6 +17,11 @@ import {
   Workflow,
   X,
   Zap,
+  Plus,
+  Pencil,
+  Trash2,
+  Upload,
+  Save,
 } from "lucide-react";
 
 import logo from "./assets/nexora-logo.jpg";
@@ -418,33 +423,150 @@ function WhyChooseUs() {
   );
 }
 
+const DEFAULT_PROJECTS = [
+  {
+    id: "ujege-college",
+    title: "Ujege College Digital School Platform",
+    category: "School Technology",
+    text: "A polished school website and digital experience concept for Ujege College, designed to present the school clearly and support digital engagement.",
+    image: null,
+    liveUrl: "https://ujege-college-preview.floot.app/",
+    tags: ["School Website", "UI/UX", "Digital Platform"],
+    featured: true,
+  },
+  {
+    id: "gradestream",
+    title: "GradeStream — School Results & CBT",
+    category: "EdTech SaaS",
+    text: "A full school technology platform covering result management, teacher/admin workflows, student access, CBT, printing, promotion and school records.",
+    image: schoolErpImg,
+    liveUrl: "https://grade-stream-dash.vercel.app/",
+    tags: ["React", "Supabase", "Tailwind", "EdTech"],
+    featured: true,
+  },
+  {
+    id: "nexora-digital",
+    title: "Nexora Digital Website",
+    category: "Agency Website",
+    text: "The Nexora Digital website — a responsive business platform built to present services, solutions, projects and direct contact channels.",
+    image: businessWebsiteImg,
+    liveUrl: "https://nexora-digital-umber.vercel.app/",
+    tags: ["React", "Vite", "Tailwind", "Framer Motion"],
+    featured: true,
+  },
+  {
+    id: "admin-dashboard",
+    title: "Admin Dashboard System",
+    category: "Web Application",
+    text: "Dashboard interface patterns for managing users, records, reports, workflows and operational data.",
+    image: adminDashboardImg,
+    liveUrl: "",
+    tags: ["Dashboards", "Admin", "UX"],
+    featured: false,
+  },
+  {
+    id: "tradepilot",
+    title: "TradePilot POS & Inventory",
+    category: "Business Software",
+    text: "A business management concept for sales, inventory, staff roles and operational reporting, designed as a scalable SaaS product.",
+    image: null,
+    liveUrl: "",
+    tags: ["POS", "Inventory", "SaaS"],
+    featured: false,
+  },
+  {
+    id: "nexora-verify",
+    title: "Nexora Verify",
+    category: "Property Technology",
+    text: "A property verification concept focused on making property information, verification steps and digital records easier to organize.",
+    image: null,
+    liveUrl: "",
+    tags: ["PropTech", "Verification", "Web App"],
+    featured: false,
+  },
+];
+
+function loadProjects() {
+  try {
+    const saved = localStorage.getItem("nexora_portfolio_projects");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length) return parsed;
+    }
+  } catch {}
+  return DEFAULT_PROJECTS;
+}
+
+function saveProjects(projects) {
+  try {
+    localStorage.setItem("nexora_portfolio_projects", JSON.stringify(projects));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function resizeImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxWidth = 1600;
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function ProjectImage({ project, className = "" }) {
+  if (project.image) {
+    return (
+      <img
+        src={project.image}
+        alt={project.title}
+        className={\`h-full w-full object-cover transition duration-500 group-hover:scale-105 \${className}\`}
+      />
+    );
+  }
+
+  return (
+    <div className={\`flex h-full min-h-56 w-full items-center justify-center bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,.22),transparent_45%),linear-gradient(135deg,#111827,#070b16)] \${className}\`}>
+      <div className="text-center px-6">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05]">
+          <Upload className="text-blue-300" size={24} />
+        </div>
+        <p className="text-sm font-semibold text-white">Project image coming soon</p>
+        <p className="mt-1 text-xs text-slate-500">Add a screenshot from Portfolio Admin</p>
+      </div>
+    </div>
+  );
+}
+
 function ProjectsPreview() {
-  const projects = [
-    {
-      title: "School Result & Management System",
-      category: "School Technology",
-      text: "Result processing, score entry, student access, and school administration.",
-      image: schoolErpImg,
-    },
-    {
-      title: "Admin Dashboard System",
-      category: "Web Application",
-      text: "Clean dashboard interfaces for managing users, records, reports, and workflows.",
-      image: adminDashboardImg,
-    },
-    {
-      title: "Business Website Development",
-      category: "Website Development",
-      text: "Responsive websites for businesses, schools, brands, and organizations.",
-      image: businessWebsiteImg,
-    },
-    {
-      title: "Custom Digital Systems",
-      category: "Custom Software",
-      text: "Tailored software solutions for institutions that need more than ordinary websites.",
-      image: customSystemImg,
-    },
-  ];
+  const [projects, setProjects] = useState(() => loadProjects());
+
+  useEffect(() => {
+    const sync = () => setProjects(loadProjects());
+    window.addEventListener("storage", sync);
+    window.addEventListener("portfolio-projects-updated", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("portfolio-projects-updated", sync);
+    };
+  }, []);
+
+  const visibleProjects = projects.filter((project) => project.featured);
 
   return (
     <section id="projects" className="mx-auto max-w-7xl px-5 py-20">
@@ -456,6 +578,9 @@ function ProjectsPreview() {
           <h2 className="mt-3 text-3xl font-black text-white md:text-5xl">
             Digital Products & Solutions We Build
           </h2>
+          <p className="mt-4 max-w-2xl text-slate-400">
+            Real projects, working previews and selected product concepts. More screenshots can be added as each project evolves.
+          </p>
         </div>
         <a href="#contact" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-300">
           Start your project <ArrowRight size={16} />
@@ -463,17 +588,13 @@ function ProjectsPreview() {
       </div>
 
       <div className="mt-12 grid gap-6 md:grid-cols-2">
-        {projects.map((project) => (
+        {visibleProjects.map((project) => (
           <div
-            key={project.title}
+            key={project.id}
             className="group overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-4 transition hover:border-purple-400/40 hover:bg-white/[0.07]"
           >
-            <div className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-white">
-              <img
-                src={project.image}
-                alt={project.title}
-                className="aspect-video w-full object-cover transition duration-500 group-hover:scale-105"
-              />
+            <div className="aspect-video overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#0b1020]">
+              <ProjectImage project={project} />
             </div>
 
             <div className="p-3">
@@ -484,15 +605,221 @@ function ProjectsPreview() {
               <h3 className="mt-5 text-2xl font-bold text-white">{project.title}</h3>
               <p className="mt-3 leading-7 text-slate-400">{project.text}</p>
 
-              <p className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-300">
-                View Solution <ArrowRight size={16} />
-              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {(project.tags || []).map((tag) => (
+                  <span key={tag} className="rounded-full bg-white/[0.05] px-3 py-1 text-xs text-slate-400">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              {project.liveUrl && (
+                <a
+                  href={project.liveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-300 hover:text-blue-200"
+                >
+                  View live project <ArrowRight size={16} />
+                </a>
+              )}
             </div>
           </div>
         ))}
       </div>
+
+      {visibleProjects.length === 0 && (
+        <div className="mt-12 rounded-3xl border border-dashed border-white/15 p-10 text-center text-slate-400">
+          No featured projects yet. Add or mark projects as featured in Portfolio Admin.
+        </div>
+      )}
     </section>
   );
+}
+
+function PortfolioAdmin() {
+  const [projects, setProjects] = useState(() => loadProjects());
+  const [editing, setEditing] = useState(null);
+  const [saved, setSaved] = useState(false);
+
+  const persist = (next) => {
+    setProjects(next);
+    saveProjects(next);
+    window.dispatchEvent(new Event("portfolio-projects-updated"));
+    setSaved(true);
+    window.setTimeout(() => setSaved(false), 1800);
+  };
+
+  const updateProject = (id, patch) => {
+    persist(projects.map((project) => project.id === id ? { ...project, ...patch } : project));
+  };
+
+  const addProject = () => {
+    const project = {
+      id: \`project-\${Date.now()}\`,
+      title: "New Project",
+      category: "Web Project",
+      text: "Add a short description of what was built and the problem it solves.",
+      image: null,
+      liveUrl: "",
+      tags: ["Web Development"],
+      featured: true,
+    };
+    const next = [...projects, project];
+    persist(next);
+    setEditing(project.id);
+  };
+
+  const deleteProject = (id) => {
+    if (!window.confirm("Delete this project from the portfolio?")) return;
+    persist(projects.filter((project) => project.id !== id));
+    if (editing === id) setEditing(null);
+  };
+
+  const uploadProjectImage = async (id, file) => {
+    if (!file) return;
+    try {
+      const image = await resizeImage(file);
+      updateProject(id, { image });
+    } catch {
+      window.alert("Could not process that image. Please try another file.");
+    }
+  };
+
+  const resetDefaults = () => {
+    if (!window.confirm("Reset the portfolio to the default project list?")) return;
+    persist(DEFAULT_PROJECTS);
+  };
+
+  return (
+    <section id="portfolio-admin" className="mx-auto max-w-7xl px-5 pb-20 pt-10">
+      <div className="rounded-[2rem] border border-blue-400/20 bg-blue-500/[0.06] p-6 md:p-8">
+        <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-blue-300">Portfolio Admin</p>
+            <h2 className="mt-2 text-2xl font-black text-white md:text-3xl">Manage project cards & screenshots</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+              Add screenshots later without editing the website code. Images are compressed in the browser and stored locally on this device in this first version.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button onClick={addProject} className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500">
+              <Plus size={17} /> Add project
+            </button>
+            <button onClick={resetDefaults} className="rounded-full border border-white/10 px-5 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/10">
+              Reset defaults
+            </button>
+          </div>
+        </div>
+
+        {saved && (
+          <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-300">
+            <Save size={14} /> Saved on this device
+          </div>
+        )}
+
+        <div className="mt-8 grid gap-5">
+          {projects.map((project) => (
+            <div key={project.id} className="overflow-hidden rounded-3xl border border-white/10 bg-[#050816]/70">
+              <div className="grid md:grid-cols-[260px_1fr]">
+                <div className="aspect-video bg-[#0b1020] md:aspect-auto">
+                  <ProjectImage project={project} />
+                </div>
+
+                <div className="p-5">
+                  {editing === project.id ? (
+                    <div className="grid gap-4">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <label className="text-xs font-semibold text-slate-400">
+                          Project name
+                          <input value={project.title} onChange={(e) => updateProject(project.id, { title: e.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none focus:border-blue-400" />
+                        </label>
+                        <label className="text-xs font-semibold text-slate-400">
+                          Category
+                          <input value={project.category} onChange={(e) => updateProject(project.id, { category: e.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none focus:border-blue-400" />
+                        </label>
+                      </div>
+
+                      <label className="text-xs font-semibold text-slate-400">
+                        Description
+                        <textarea value={project.text} onChange={(e) => updateProject(project.id, { text: e.target.value })} rows={3} className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none focus:border-blue-400" />
+                      </label>
+
+                      <label className="text-xs font-semibold text-slate-400">
+                        Live project URL
+                        <input value={project.liveUrl || ""} onChange={(e) => updateProject(project.id, { liveUrl: e.target.value })} placeholder="https://..." className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none focus:border-blue-400" />
+                      </label>
+
+                      <div className="flex flex-wrap items-center gap-3">
+                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-[#050816] hover:bg-slate-200">
+                          <Upload size={16} />
+                          {project.image ? "Replace screenshot" : "Add screenshot"}
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => uploadProjectImage(project.id, e.target.files?.[0])} />
+                        </label>
+                        {project.image && (
+                          <button onClick={() => updateProject(project.id, { image: null })} className="rounded-full border border-red-400/20 px-4 py-2.5 text-sm font-semibold text-red-300 hover:bg-red-400/10">
+                            Remove image
+                          </button>
+                        )}
+                        <label className="inline-flex items-center gap-2 text-sm text-slate-300">
+                          <input type="checkbox" checked={!!project.featured} onChange={(e) => updateProject(project.id, { featured: e.target.checked })} />
+                          Show in featured projects
+                        </label>
+                        <button onClick={() => setEditing(null)} className="ml-auto rounded-full border border-white/10 px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/10">
+                          Done
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-xl font-bold text-white">{project.title}</h3>
+                          {project.featured && <span className="rounded-full bg-blue-500/10 px-3 py-1 text-[11px] font-semibold text-blue-300">Featured</span>}
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500">{project.category}</p>
+                        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">{project.text}</p>
+                      </div>
+                      <div className="flex shrink-0 gap-2">
+                        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-white/10 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:bg-white/10">
+                          <Upload size={15} />
+                          {project.image ? "Replace" : "Upload"}
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => uploadProjectImage(project.id, e.target.files?.[0])} />
+                        </label>
+                        <button onClick={() => setEditing(project.id)} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:bg-white/10">
+                          <Pencil size={15} /> Edit
+                        </button>
+                        <button onClick={() => deleteProject(project.id)} className="inline-flex items-center gap-2 rounded-full border border-red-400/20 px-4 py-2.5 text-sm font-semibold text-red-300 hover:bg-red-400/10">
+                          <Trash2 size={15} /> Delete
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-6 text-xs leading-5 text-slate-500">
+          Note: this editor currently saves to browser storage, so it is intended for your own device. It is not a secure multi-user admin system and uploaded images do not automatically sync to other devices.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function AdminGate() {
+  const [show, setShow] = useState(() => window.location.hash === "#admin");
+
+  useEffect(() => {
+    const onHash = () => setShow(window.location.hash === "#admin");
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  if (!show) return null;
+  return <PortfolioAdmin />;
 }
 
 function Process() {
@@ -642,9 +969,10 @@ function Footer() {
         </div>
       </div>
 
-      <p className="mx-auto mt-8 max-w-7xl text-sm text-slate-500">
-        © 2026 Nexora Digital. All rights reserved.
-      </p>
+      <div className="mx-auto mt-8 flex max-w-7xl flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+        <a href="#admin" className="text-slate-600 transition hover:text-blue-400">Portfolio Admin</a>
+        <span>© 2026 Nexora Digital. All rights reserved.</span>
+      </div>
     </footer>
   );
 }
@@ -672,6 +1000,7 @@ export default function App() {
       <FeaturedSolution />
       <WhyChooseUs />
       <ProjectsPreview />
+      <AdminGate />
       <Process />
       <FAQ />
       <CTA />
