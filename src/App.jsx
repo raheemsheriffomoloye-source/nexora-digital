@@ -810,12 +810,12 @@ function PortfolioAdmin() {
 }
 
 function AdminGate() {
-  const [show, setShow] = useState(() => window.location.hash === "#admin");
+  const [show, setShow] = useState(() => window.location.pathname === "/robosapien");
 
   useEffect(() => {
-    const onHash = () => setShow(window.location.hash === "#admin");
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
+    const onHash = () => setShow(window.location.pathname === "/robosapien");
+    window.addEventListener("popstate", onHash);
+    return () => window.removeEventListener("popstate", onHash);
   }, []);
 
   if (!show) return null;
@@ -970,7 +970,7 @@ function Footer() {
       </div>
 
       <div className="mx-auto mt-8 flex max-w-7xl flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
-        <a href="#admin" className="text-slate-600 transition hover:text-blue-400">Portfolio Admin</a>
+        <a href="/robosapien" className="text-slate-600 transition hover:text-blue-400">Portfolio Admin</a>
         <span>© 2026 Nexora Digital. All rights reserved.</span>
       </div>
     </footer>
