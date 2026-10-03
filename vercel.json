@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/robosapien", "destination": "/" },
+    { "source": "/robosapien/:path*", "destination": "/" },
+    { "source": "/((?!assets/).*)", "destination": "/" }
+  ]
+}
