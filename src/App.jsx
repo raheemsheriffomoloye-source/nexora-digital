@@ -535,13 +535,13 @@ function ProjectImage({ project, className = "" }) {
       <img
         src={project.image}
         alt={project.title}
-        className={\`h-full w-full object-cover transition duration-500 group-hover:scale-105 \${className}\`}
+        className={`h-full w-full object-cover transition duration-500 group-hover:scale-105 ${className}`}
       />
     );
   }
 
   return (
-    <div className={\`flex h-full min-h-56 w-full items-center justify-center bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,.22),transparent_45%),linear-gradient(135deg,#111827,#070b16)] \${className}\`}>
+    <div className={`flex h-full min-h-56 w-full items-center justify-center bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,.22),transparent_45%),linear-gradient(135deg,#111827,#070b16)] ${className}`}>
       <div className="text-center px-6">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05]">
           <Upload className="text-blue-300" size={24} />
@@ -656,7 +656,7 @@ function PortfolioAdmin() {
 
   const addProject = () => {
     const project = {
-      id: \`project-\${Date.now()}\`,
+      id: `project-${Date.now()}`,
       title: "New Project",
       category: "Web Project",
       text: "Add a short description of what was built and the problem it solves.",
